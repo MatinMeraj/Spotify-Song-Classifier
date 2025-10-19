@@ -1,137 +1,125 @@
-# Song Mood Classification System
+# Song Mood Classification System - Milestone 1
 
-A comprehensive AI system for classifying songs based on mood using audio features and lyrics analysis. This project demonstrates advanced machine learning techniques including ensemble methods, uncertainty handling, and confidence-based playlist generation.
+A machine learning system for classifying songs into mood categories using audio features from Kaggle datasets.
 
-## 🎯 Project Overview
+## 🎯 Milestone 1 Goals
+- ✅ Basic end-to-end classifier working on labeled dataset
+- ✅ Four distinct mood categories mapped
+- ✅ Project repository set up in Git
+- ✅ Model training and evaluation complete
 
-This system classifies songs into four mood categories:
-- **Happy**: High energy, high valence, fast tempo
-- **Chill**: Low energy, medium valence, slow tempo  
-- **Sad**: Low energy, low valence, slow tempo
-- **Hyped**: High energy, high valence, very fast tempo
+## 🎵 Mood Categories
+- **Happy**: Upbeat, high energy, positive valence
+- **Chill**: Relaxed, moderate energy, balanced mood
+- **Sad**: Slow tempo, low energy, negative valence  
+- **Hyped**: Fast tempo, high energy, very positive
 
-## 🚀 Features
+## 🚀 Quick Start
 
-### Core Functionality
-- **Multi-modal Analysis**: Combines audio features and lyrics analysis
-- **Multiple ML Algorithms**: KNN, Logistic Regression, Random Forest, SVM
-- **Ensemble Methods**: Voting classifier combining multiple models
-- **Uncertainty Handling**: Confidence-based prediction filtering
-- **Hyperparameter Tuning**: Automated model optimization
-
-### Advanced Features
-- **Confidence Visualization**: Detailed analysis of prediction confidence
-- **Mood Mapping**: Visual representation of feature relationships
-- **Playlist Generation**: Confidence-ranked song recommendations
-- **Performance Metrics**: Comprehensive evaluation with confusion matrices
-
-## 📊 Technical Implementation
-
-### Data Processing
-- **Audio Features**: Tempo, energy, valence, loudness, danceability, speechiness, acousticness, instrumentalness, liveness
-- **Lyrics Features**: Word count, sentiment analysis, emotional intensity, keyword density
-- **Data Scaling**: StandardScaler for feature normalization
-
-### Machine Learning Models
-1. **Baseline Models**:
-   - Rule-based classifier (BPM and energy thresholds)
-   - K-Nearest Neighbors
-   - Logistic Regression
-
-2. **Advanced Models**:
-   - Random Forest with hyperparameter tuning
-   - Ensemble voting classifier
-   - Support Vector Machine
-
-### Evaluation Metrics
-- **Accuracy**: Overall classification accuracy
-- **Precision/Recall/F1**: Per-class performance metrics
-- **Confusion Matrices**: Visual performance analysis
-- **Cross-validation**: 5-fold CV for robust evaluation
-
-## 🎵 Results
-
-### Model Performance
-- **Audio Model**: 79.0% accuracy
-- **Lyrics Model**: 74.0% accuracy  
-- **Rule-based Baseline**: 57.5% accuracy
-- **Ensemble Model**: 78.5% accuracy
-- **Tuned Random Forest**: 77.0% accuracy
-
-### Key Insights
-- Audio features outperform lyrics for mood classification
-- Ensemble methods provide robust predictions
-- Confidence analysis reveals prediction reliability
-- High-confidence predictions show improved accuracy
-
-## 🛠️ Installation & Usage
-
-### Requirements
+### Installation
 ```bash
 pip install -r requirements.txt
 ```
 
-### Basic Usage
-```python
-# Run basic classifier
-python song_mood_classifier.py
-
-# Run advanced classifier with ensemble methods
-python advanced_mood_classifier.py
+### Run Milestone 1
+```bash
+python milestone1_kaggle_classifier.py
 ```
 
+## 📊 Features
+
+### Data Processing
+- **Dataset**: 800 songs from Kaggle-style dataset (200 per mood)
+- **Features**: 9 audio features (tempo, energy, valence, loudness, etc.)
+- **Preprocessing**: Feature scaling and train/test split
+
+### Machine Learning Models
+- **Random Forest**: Ensemble method with feature importance
+- **Logistic Regression**: Linear classification with regularization
+- **K-Nearest Neighbors**: Distance-based classification
+
+### Evaluation
+- **Cross-validation**: 5-fold CV for robust evaluation
+- **Performance Metrics**: Accuracy, precision, recall, F1-score
+- **Visualizations**: Confusion matrix, feature analysis, mood distribution
+
+## 📈 Results
+
+### Model Performance
+- **Best Model**: Random Forest (typically 75-80% accuracy)
+- **Cross-validation**: 5-fold CV with confidence intervals
+- **Test Accuracy**: Evaluated on 20% holdout set
+
 ### Generated Files
-- `song_mood_dataset.csv`: Complete dataset with features and labels
-- `confusion_matrix_*.png`: Model performance visualizations
-- `mood_analysis.png`: Feature relationship analysis
-- `confidence_analysis.png`: Confidence score distributions
-- `mood_map.png`: Mood prediction visualization
+- `kaggle_music_dataset.csv`: Complete dataset with features and labels
+- `milestone1_model.pkl`: Trained model for predictions
+- `milestone1_analysis.png`: Comprehensive analysis visualizations
 
-## 📈 Visualizations
+## 🎯 Usage Example
 
-The system generates comprehensive visualizations:
-- **Confusion Matrices**: Model performance by mood category
-- **Feature Importance**: Most influential audio features
-- **Confidence Analysis**: Prediction reliability assessment
-- **Mood Maps**: Visual feature relationships
-- **Playlist Rankings**: Confidence-sorted song recommendations
+```python
+from milestone1_kaggle_classifier import KaggleMoodClassifier
 
-## 🔬 Technical Specifications
+# Initialize classifier
+classifier = KaggleMoodClassifier()
 
-### Libraries Used
-- **pandas**: Data manipulation and analysis
-- **numpy**: Numerical computations
-- **scikit-learn**: Machine learning algorithms
-- **matplotlib/seaborn**: Data visualization
-- **spotipy**: Spotify API integration (optional)
+# Load trained model
+classifier.load_model('milestone1_model.pkl')
+
+# Predict mood for new song
+prediction, confidence = classifier.predict_new_song(
+    tempo=120,      # BPM
+    energy=0.8,     # 0-1 scale
+    valence=0.7,    # 0-1 scale
+    loudness=-5     # dB
+)
+
+print(f"Predicted mood: {prediction}")
+print(f"Confidence: {confidence:.3f}")
+```
+
+## 📁 Project Structure
+```
+song-mood-classifier/
+├── milestone1_kaggle_classifier.py  # Main implementation
+├── requirements.txt                 # Dependencies
+├── README.md                       # This file
+├── kaggle_music_dataset.csv        # Generated dataset
+├── milestone1_model.pkl            # Trained model
+└── milestone1_analysis.png         # Analysis visualizations
+```
+
+## 🔄 Next Steps (Future Milestones)
+- **Milestone 2**: Spotify API integration for real-time prediction
+- **Web Interface**: User-friendly song mood prediction
+- **Playlist Generation**: Create mood-based playlists
+- **Advanced Models**: Deep learning and ensemble methods
+
+## 👥 Team Collaboration
+- **Branch Strategy**: Feature branches for each team member
+- **Code Review**: Pull requests for integration
+- **Documentation**: Comprehensive README and code comments
+
+## 📊 Technical Details
+
+### Dependencies
+- pandas >= 1.5.0
+- numpy >= 1.21.0
+- matplotlib >= 3.5.0
+- seaborn >= 0.11.0
+- scikit-learn >= 1.1.0
 
 ### Model Architecture
-- **Feature Engineering**: 9 audio + 5 lyrics features
+- **Feature Engineering**: 9 audio features
 - **Data Splitting**: 80/20 train/test split with stratification
 - **Cross-validation**: 5-fold CV for model selection
-- **Hyperparameter Tuning**: GridSearchCV for optimization
+- **Scaling**: StandardScaler for feature normalization
 
 ## 🎯 Business Applications
-
-This system can be applied to:
 - **Music Recommendation**: Personalized playlist generation
 - **Content Curation**: Automated music categorization
 - **Mood-based Search**: Find songs matching desired emotional state
 - **Music Analytics**: Understanding listener preferences
 
-## 📝 Future Enhancements
-
-- **Deep Learning**: Neural network implementation with PyTorch
-- **Real-time Processing**: Live audio analysis capabilities
-- **Multi-language Support**: Lyrics analysis in multiple languages
-- **User Feedback**: Learning from user preferences
-- **API Integration**: Real-time Spotify playlist analysis
-
-## 🏆 Project Achievements
-
-This project demonstrates proficiency in:
-- **Machine Learning**: Multiple algorithms and ensemble methods
-- **Data Science**: Feature engineering and model evaluation
-- **Python Programming**: Object-oriented design and API integration
-- **Data Visualization**: Comprehensive analysis and reporting
-- **Statistical Analysis**: Confidence intervals and uncertainty handling
+## 📝 License
+This project is part of CMPT 310 - Introduction to Artificial Intelligence course work.
