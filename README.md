@@ -26,7 +26,7 @@ pip install -r requirements.txt
 
 ### Run the Classifier
 ```bash
-python milestone1_kaggle_classifier.py
+python milestone1_mood_classifier.py
 ```
 
 ## Features
@@ -54,17 +54,17 @@ python milestone1_kaggle_classifier.py
 - Test accuracy evaluated on 20% holdout set
 
 ### Generated Files
-- `kaggle_music_dataset.csv`: Complete dataset with features and labels
+- `music_dataset.csv`: Complete dataset with features and labels
 - `milestone1_model.pkl`: Trained model for predictions
 - `milestone1_analysis.png`: Comprehensive analysis visualizations
 
 ## Usage Example
 
 ```python
-from milestone1_kaggle_classifier import KaggleMoodClassifier
+from milestone1_mood_classifier import MoodClassifier
 
 # Initialize classifier
-classifier = KaggleMoodClassifier()
+classifier = MoodClassifier()
 
 # Load trained model
 classifier.load_model('milestone1_model.pkl')
@@ -84,12 +84,12 @@ print(f"Confidence: {confidence:.3f}")
 ## Project Structure
 ```
 song-mood-classifier/
-├── milestone1_kaggle_classifier.py  # Main implementation
-├── requirements.txt                 # Dependencies
-├── README.md                       # This file
-├── kaggle_music_dataset.csv        # Generated dataset
-├── milestone1_model.pkl            # Trained model
-└── milestone1_analysis.png         # Analysis visualizations
+├── milestone1_mood_classifier.py  # Main implementation
+├── requirements.txt               # Dependencies
+├── README.md                     # This file
+├── music_dataset.csv             # Generated dataset
+├── milestone1_model.pkl          # Trained model
+└── milestone1_analysis.png      # Analysis visualizations
 ```
 
 ## Next Steps (Future Milestones)
