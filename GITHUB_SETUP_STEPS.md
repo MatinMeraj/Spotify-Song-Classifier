@@ -8,7 +8,7 @@
 3. **Select "New repository"**
 
 ### **Repository Settings:**
-- **Repository name**: `song-mood-classifier`
+- **Repository name**: `Spotify-Song-Classifier`
 - **Description**: `AI-powered song mood classification using machine learning`
 - **Visibility**: **Public** ✅ (for portfolio)
 - **Initialize this repository with**:
@@ -34,7 +34,7 @@ https://github.com/YOUR_USERNAME/song-mood-classifier.git
 cd /Users/matinmeraj/Documents/sfu/term4/cmpt310/project
 
 # Add GitHub as remote origin
-git remote add origin https://github.com/YOUR_USERNAME/song-mood-classifier.git
+git remote add origin https://github.com/MatinMeraj/Spotify-Song-Classifier.git
 
 # Rename main branch (if needed)
 git branch -M main
@@ -92,7 +92,7 @@ git push -u origin develop
 ```
 🎵 Song Mood Classification Project
 
-Repository: https://github.com/YOUR_USERNAME/song-mood-classifier
+Repository: https://github.com/MatinMeraj/Spotify-Song-Classifier
 
 Setup Instructions:
 1. Clone the repository
@@ -114,7 +114,7 @@ Team Responsibilities:
 ### **If "remote origin already exists":**
 ```bash
 git remote remove origin
-git remote add origin https://github.com/YOUR_USERNAME/song-mood-classifier.git
+git remote add origin https://github.com/MatinMeraj/Spotify-Song-Classifier.git
 ```
 
 ### **If "authentication failed":**

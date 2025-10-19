@@ -29,7 +29,7 @@ git push -u origin develop
 ### **For Each Team Member:**
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/song-mood-classifier.git
+git clone https://github.com/MatinMeraj/Spotify-Song-Classifier.git
 cd song-mood-classifier
 
 # 2. Install dependencies
