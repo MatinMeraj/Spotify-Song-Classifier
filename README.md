@@ -1,9 +1,9 @@
-# Spotify Song Mood Classification
+# Song Mood Classification System
 
-A machine learning project for classifying songs into mood categories using audio features and machine learning algorithms.
+A machine learning system for classifying songs into mood categories using audio features and machine learning algorithms.
 
 ## Project Overview
-This project aims to build a system that can automatically classify songs into different mood categories (happy, chill, sad, hyped) based on their audio features. The system uses various machine learning algorithms to achieve this classification task.
+This project implements a machine learning system that automatically classifies songs into different mood categories (happy, chill, sad, hyped) based on their audio features. The system uses various machine learning algorithms to achieve this classification task.
 
 ## Milestone 1 Goals
 - Basic end-to-end classifier working on labeled dataset
@@ -32,7 +32,7 @@ python milestone1_kaggle_classifier.py
 ## Features
 
 ### Data Processing
-- Dataset with 800 songs (200 per mood category)
+- Dataset with 900 songs across multiple genres
 - 9 audio features including tempo, energy, valence, and loudness
 - Feature scaling and train/test split for model evaluation
 
@@ -49,7 +49,7 @@ python milestone1_kaggle_classifier.py
 ## Results
 
 ### Model Performance
-- Best performing model: Random Forest with 75-80% accuracy
+- Best performing model: Random Forest with 81% accuracy
 - 5-fold cross-validation with confidence intervals
 - Test accuracy evaluated on 20% holdout set
 

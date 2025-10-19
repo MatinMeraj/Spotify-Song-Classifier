@@ -24,25 +24,25 @@ class KaggleMoodClassifier:
         
     def load_kaggle_dataset(self):
         """Load real Kaggle music dataset"""
-        print("🔄 Loading real Kaggle music dataset...")
+        print("Loading music dataset...")
         
         try:
             # Try to load the real dataset
             df = pd.read_csv('kaggle_music_dataset.csv')
-            print(f"✅ Loaded {len(df)} real songs from Kaggle dataset")
-            print(f"📊 Mood distribution:")
+            print(f"Loaded {len(df)} songs from dataset")
+            print(f"Mood distribution:")
             print(df['mood'].value_counts())
-            print(f"📊 Genre distribution:")
+            print(f"Genre distribution:")
             print(df['genre'].value_counts())
             return df
             
         except FileNotFoundError:
-            print("❌ Real dataset not found. Creating realistic dataset...")
+            print("Dataset not found. Creating fallback dataset...")
             return self.create_fallback_dataset()
     
     def create_fallback_dataset(self):
         """Create fallback dataset if real data not available"""
-        print("🔄 Creating realistic fallback dataset...")
+        print("Creating fallback dataset...")
         np.random.seed(42)
         
         data = []
@@ -91,12 +91,12 @@ class KaggleMoodClassifier:
                 })
         
         df = pd.DataFrame(data)
-        print(f"✅ Created fallback dataset with {len(df)} songs")
+        print(f"Created fallback dataset with {len(df)} songs")
         return df
     
     def train_models(self, df):
         """Train and compare multiple models"""
-        print("\n🤖 Training models on Kaggle data...")
+        print("\nTraining models on dataset...")
         
         # Prepare features
         features = ['tempo', 'energy', 'valence', 'loudness', 'danceability', 
@@ -155,20 +155,20 @@ class KaggleMoodClassifier:
         self.model = best_model
         best_name = max(results.keys(), key=lambda k: results[k]['cv_score'])
         
-        print(f"\n🏆 Best Model: {best_name}")
-        print(f"📊 CV Score: {results[best_name]['cv_score']:.3f} ± {results[best_name]['cv_std']:.3f}")
-        print(f"📊 Test Accuracy: {results[best_name]['test_accuracy']:.3f}")
+        print(f"\nBest Model: {best_name}")
+        print(f"CV Score: {results[best_name]['cv_score']:.3f} ± {results[best_name]['cv_std']:.3f}")
+        print(f"Test Accuracy: {results[best_name]['test_accuracy']:.3f}")
         
         # Detailed evaluation
         y_pred = best_model.predict(X_test_scaled)
-        print(f"\n📋 Classification Report:")
+        print(f"\nClassification Report:")
         print(classification_report(y_test, y_pred, target_names=self.mood_labels))
         
         return results, X_test, y_test, y_pred
     
     def create_visualizations(self, df, X_test, y_test, y_pred):
         """Create comprehensive visualizations"""
-        print("\n📈 Creating visualizations...")
+        print("\nCreating visualizations...")
         
         # Set up the plotting style
         plt.style.use('default')
@@ -254,7 +254,7 @@ class KaggleMoodClassifier:
         plt.savefig('milestone1_analysis.png', dpi=300, bbox_inches='tight')
         plt.show()
         
-        print("✅ Visualizations saved as 'milestone1_analysis.png'")
+        print("Visualizations saved as 'milestone1_analysis.png'")
     
     def predict_new_song(self, tempo, energy, valence, loudness, danceability=0.5, 
                         speechiness=0.1, acousticness=0.1, instrumentalness=0.1, liveness=0.1):
@@ -283,7 +283,7 @@ class KaggleMoodClassifier:
             'scaler': self.scaler,
             'mood_labels': self.mood_labels
         }, filename)
-        print(f"✅ Model saved as '{filename}'")
+        print(f"Model saved as '{filename}'")
     
     def load_model(self, filename='milestone1_model.pkl'):
         """Load a trained model"""
@@ -292,25 +292,25 @@ class KaggleMoodClassifier:
         self.model = data['model']
         self.scaler = data['scaler']
         self.mood_labels = data['mood_labels']
-        print(f"✅ Model loaded from '{filename}'")
+        print(f"Model loaded from '{filename}'")
 
 def main():
     """Main execution for Milestone 1"""
-    print("🎵 Milestone 1: Song Mood Classification System")
+    print("Milestone 1: Song Mood Classification System")
     print("=" * 60)
-    print("📊 Using Kaggle Dataset for Training and Evaluation")
-    print("🎯 Goal: Basic end-to-end classifier working on labeled dataset")
+    print("Using Dataset for Training and Evaluation")
+    print("Goal: Basic end-to-end classifier working on labeled dataset")
     print()
     
     # Initialize classifier
     classifier = KaggleMoodClassifier()
     
-    # Load real Kaggle dataset
+    # Load dataset
     df = classifier.load_kaggle_dataset()
     
     # Save dataset
     df.to_csv('kaggle_music_dataset.csv', index=False)
-    print("💾 Dataset saved as 'kaggle_music_dataset.csv'")
+    print("Dataset saved as 'kaggle_music_dataset.csv'")
     
     # Train models
     results, X_test, y_test, y_pred = classifier.train_models(df)
@@ -322,13 +322,13 @@ def main():
     classifier.save_model()
     
     # Demonstrate prediction
-    print("\n🎯 Testing prediction on new song:")
+    print("\nTesting prediction on new song:")
     print("Example: Tempo=120, Energy=0.8, Valence=0.7, Loudness=-5")
     prediction, confidence = classifier.predict_new_song(120, 0.8, 0.7, -5)
     print(f"Predicted mood: {prediction} (confidence: {confidence:.3f})")
     
-    print("\n✅ Milestone 1 Complete!")
-    print("📊 Ready for team collaboration and GitHub upload")
+    print("\nMilestone 1 Complete!")
+    print("Ready for team collaboration and GitHub upload")
     
     return classifier, df
 
