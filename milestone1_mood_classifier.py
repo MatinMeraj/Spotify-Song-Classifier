@@ -27,18 +27,37 @@ class MoodClassifier:
         print("Loading music dataset...")
         
         try:
-            # Try to load the real dataset
+            # Try to load preprocessed dataset
             df = pd.read_csv('music_dataset.csv')
-            print(f"Loaded {len(df)} songs from dataset")
+            print(f"Loaded {len(df)} songs from preprocessed dataset")
             print(f"Mood distribution:")
             print(df['mood'].value_counts())
-            print(f"Genre distribution:")
-            print(df['genre'].value_counts())
             return df
             
         except FileNotFoundError:
-            print("Dataset not found. Creating fallback dataset...")
-            return self.create_fallback_dataset()
+            try:
+                # Try loading the songs dataset
+                print("Preprocessed dataset not found. Loading songs.csv...")
+                df = pd.read_csv('songs.csv')
+                print(f"Loaded {len(df)} songs from songs.csv")
+                
+                # Preprocess (moods already labeled!)
+                df = self.preprocess_songs_dataset(df)
+                
+                # Save preprocessed dataset
+                df.to_csv('music_dataset.csv', index=False)
+                print(f"Preprocessed and saved {len(df)} songs to 'music_dataset.csv'")
+                print(f"Mood distribution:")
+                print(df['mood'].value_counts())
+                return df
+                
+            except FileNotFoundError:
+                print("songs.csv not found. Creating fallback dataset...")
+                return self.create_fallback_dataset()
+            except Exception as e:
+                print(f"Error loading songs.csv: {e}")
+                print("Creating fallback dataset...")
+                return self.create_fallback_dataset()
     
     def create_fallback_dataset(self):
         """Create fallback dataset if real data not available"""
@@ -94,13 +113,188 @@ class MoodClassifier:
         print(f"Created fallback dataset with {len(df)} songs")
         return df
     
+    def preprocess_songs_dataset(self, df):
+        """Preprocess songs.csv dataset (moods already labeled!)"""
+        print("Preprocessing songs.csv dataset...")
+        print(f"Original dataset size: {len(df)} songs")
+        
+        # Expected columns in songs.csv
+        # artist, track_name, text, length, mood, genre, tempo, loudness, energy, valence, release_year
+        
+        # Audio features that exist in this dataset
+        required_features = ['tempo', 'loudness', 'energy', 'valence']
+        
+        # Check for mood column
+        if 'mood' not in df.columns:
+            print("ERROR: 'mood' column not found! Using fallback dataset instead.")
+            return self.create_fallback_dataset()
+        
+        # Show original mood distribution
+        print(f"\nOriginal mood distribution:")
+        print(df['mood'].value_counts())
+        
+        # Filter to only include our 4 mood categories (case-insensitive)
+        df['mood'] = df['mood'].str.lower().str.strip()
+        df = df[df['mood'].isin(self.mood_labels)]
+        print(f"\nAfter filtering to 4 moods: {len(df)} songs")
+        
+        # Check for required features
+        missing_features = [f for f in required_features if f not in df.columns]
+        if missing_features:
+            print(f"ERROR: Missing required features: {missing_features}")
+            print("Using fallback dataset instead.")
+            return self.create_fallback_dataset()
+        
+        # Remove rows with missing values in required features
+        original_len = len(df)
+        df = df.dropna(subset=required_features + ['mood'])
+        if len(df) < original_len:
+            print(f"Removed {original_len - len(df)} rows with missing values")
+        
+        # FIX: Normalize features that might be on wrong scale
+        print("\n=== Checking feature scales ===")
+        print(f"Raw feature ranges BEFORE normalization:")
+        print(f"  Tempo: {df['tempo'].min():.1f} - {df['tempo'].max():.1f}")
+        print(f"  Loudness: {df['loudness'].min():.1f} - {df['loudness'].max():.1f}")
+        print(f"  Energy: {df['energy'].min():.1f} - {df['energy'].max():.1f}")
+        print(f"  Valence: {df['valence'].min():.1f} - {df['valence'].max():.1f}")
+        
+        # Convert to numeric (in case they're strings)
+        df['energy'] = pd.to_numeric(df['energy'], errors='coerce')
+        df['valence'] = pd.to_numeric(df['valence'], errors='coerce')
+        
+        # Check for all-zero energy (data quality issue)
+        if df['energy'].max() == 0 and df['energy'].min() == 0:
+            print("ERROR: All energy values are 0! This indicates bad data.")
+            print("This will cause perfect classification scores (overfitting).")
+            print("Please check your source CSV file for correct energy values.")
+        
+        # Normalize if needed
+        if df['energy'].max() > 1.5:
+            print(f"Normalizing energy from 0-100 to 0-1 scale...")
+            df['energy'] = df['energy'] / 100.0
+        
+        if df['valence'].max() > 1.5:
+            print(f"Normalizing valence from 0-100 to 0-1 scale...")
+            df['valence'] = df['valence'] / 100.0
+        
+        print(f"\nFinal feature ranges AFTER normalization:")
+        print(f"  Tempo: {df['tempo'].min():.1f} - {df['tempo'].max():.1f}")
+        print(f"  Loudness: {df['loudness'].min():.1f} - {df['loudness'].max():.1f}")
+        print(f"  Energy: {df['energy'].min():.3f} - {df['energy'].max():.3f}")
+        print(f"  Valence: {df['valence'].min():.3f} - {df['valence'].max():.3f}")
+        
+        # Show mood distribution before balancing
+        print(f"\nMood distribution (before balancing):")
+        print(df['mood'].value_counts())
+        
+        # Balance dataset - take equal samples from each mood
+        min_samples = df['mood'].value_counts().min()
+        samples_per_mood = min(min_samples, 500)  # Cap at 500 per mood
+        
+        print(f"\nBalancing dataset: {samples_per_mood} songs per mood...")
+        df = df.groupby('mood', group_keys=False).apply(
+            lambda x: x.sample(n=samples_per_mood, random_state=42)
+        )
+        
+        # Keep relevant columns (including text for future use!)
+        keep_columns = ['track_name', 'artist'] + required_features + ['mood']
+        
+        # Add text column if available (for future lyrics analysis)
+        if 'text' in df.columns:
+            keep_columns.insert(2, 'text')  # Add after track_name and artist
+            print("✓ Keeping 'text' column for future lyrics analysis")
+        
+        # Keep genre if available (useful metadata)
+        if 'genre' in df.columns:
+            keep_columns.append('genre')
+        
+        available_columns = [col for col in keep_columns if col in df.columns]
+        df = df[available_columns]
+        
+        print(f"\nPreprocessing complete: {len(df)} songs ready for training")
+        print(f"Final mood distribution:")
+        print(df['mood'].value_counts())
+        
+        return df
+    
+    def preprocess_kaggle_data(self, df):
+        """Preprocess Kaggle dataset and assign moods"""
+        print("Preprocessing Kaggle data...")
+        
+        # Required features for our model
+        required_features = ['tempo', 'energy', 'valence', 'loudness', 'danceability', 
+                           'speechiness', 'acousticness', 'instrumentalness', 'liveness']
+        
+        # Check if all features exist
+        missing_features = [f for f in required_features if f not in df.columns]
+        if missing_features:
+            print(f"Warning: Missing features: {missing_features}")
+            for feature in missing_features:
+                df[feature] = 0.5  # Default value
+        
+        # Remove rows with missing values in key features
+        df = df.dropna(subset=required_features)
+        
+        # Assign moods based on audio features
+        print("Assigning moods based on audio features...")
+        df['mood'] = df.apply(self.assign_mood_from_features, axis=1)
+        
+        # Show mood distribution before balancing
+        print(f"Mood distribution (before balancing):")
+        print(df['mood'].value_counts())
+        
+        # Balance dataset - take equal samples from each mood
+        min_samples = df['mood'].value_counts().min()
+        samples_per_mood = min(min_samples, 400)  # Cap at 400 per mood
+        
+        print(f"Balancing dataset: {samples_per_mood} songs per mood...")
+        df = df.groupby('mood', group_keys=False).apply(
+            lambda x: x.sample(n=samples_per_mood, random_state=42)
+        )
+        
+        # Keep relevant columns
+        keep_columns = ['track_name', 'track_artist'] + required_features + ['mood']
+        available_columns = [col for col in keep_columns if col in df.columns]
+        df = df[available_columns]
+        
+        print(f"Preprocessing complete: {len(df)} songs ready for training")
+        return df
+    
+    def assign_mood_from_features(self, row):
+        """Assign mood category based on audio features"""
+        tempo = row['tempo']
+        energy = row['energy']
+        valence = row['valence']
+        
+        # Rule-based mood assignment
+        # Hyped: Fast tempo + high energy
+        if tempo > 120 and energy > 0.7:
+            return 'hyped'
+        
+        # Happy: High valence + moderate/high energy
+        elif valence > 0.6 and energy > 0.5:
+            return 'happy'
+        
+        # Sad: Low valence OR (low energy + low valence)
+        elif valence < 0.4 or (energy < 0.5 and valence < 0.5):
+            return 'sad'
+        
+        # Chill: Everything else (moderate values)
+        else:
+            return 'chill'
+    
     def train_models(self, df):
         """Train and compare multiple models"""
         print("\nTraining models on dataset...")
         
-        # Prepare features
-        features = ['tempo', 'energy', 'valence', 'loudness', 'danceability', 
-                   'speechiness', 'acousticness', 'instrumentalness', 'liveness']
+        # Prepare features - use only what's available in the dataset
+        all_possible_features = ['tempo', 'energy', 'valence', 'loudness', 'danceability', 
+                                'speechiness', 'acousticness', 'instrumentalness', 'liveness']
+        
+        # Detect which features are actually in the dataset
+        features = [f for f in all_possible_features if f in df.columns]
+        print(f"Using {len(features)} features: {features}")
         
         X = df[features]
         y = df['mood']
@@ -153,6 +347,7 @@ class MoodClassifier:
         
         # Select best model
         self.model = best_model
+        self.feature_names = features  # Store feature names for later use
         best_name = max(results.keys(), key=lambda k: results[k]['cv_score'])
         
         print(f"\nBest Model: {best_name}")
@@ -218,11 +413,9 @@ class MoodClassifier:
         
         # 5. Feature importance (if Random Forest)
         if hasattr(self.model, 'feature_importances_'):
-            feature_names = ['tempo', 'energy', 'valence', 'loudness', 'danceability', 
-                           'speechiness', 'acousticness', 'instrumentalness', 'liveness']
             importance = self.model.feature_importances_
             feature_importance = pd.DataFrame({
-                'feature': feature_names,
+                'feature': self.feature_names,
                 'importance': importance
             }).sort_values('importance', ascending=True)
             
@@ -256,15 +449,28 @@ class MoodClassifier:
         
         print("Visualizations saved as 'milestone1_analysis.png'")
     
-    def predict_new_song(self, tempo, energy, valence, loudness, danceability=0.5, 
-                        speechiness=0.1, acousticness=0.1, instrumentalness=0.1, liveness=0.1):
-        """Predict mood for a new song"""
+    def predict_new_song(self, tempo, energy, valence, loudness, danceability=None, 
+                        speechiness=None, acousticness=None, instrumentalness=None, liveness=None):
+        """Predict mood for a new song (only required features: tempo, energy, valence, loudness)"""
         if self.model is None:
             return "Model not trained yet!"
         
-        # Create feature vector
-        features = np.array([[tempo, energy, valence, loudness, danceability, 
-                             speechiness, acousticness, instrumentalness, liveness]])
+        # Create feature dictionary with all values
+        all_features = {
+            'tempo': tempo,
+            'energy': energy,
+            'valence': valence,
+            'loudness': loudness,
+            'danceability': danceability if danceability is not None else 0.5,
+            'speechiness': speechiness if speechiness is not None else 0.1,
+            'acousticness': acousticness if acousticness is not None else 0.1,
+            'instrumentalness': instrumentalness if instrumentalness is not None else 0.1,
+            'liveness': liveness if liveness is not None else 0.1
+        }
+        
+        # Create feature vector with only the features used in training
+        feature_values = [all_features[f] for f in self.feature_names]
+        features = np.array([feature_values])
         
         # Scale features
         features_scaled = self.scaler.transform(features)
@@ -281,7 +487,8 @@ class MoodClassifier:
         joblib.dump({
             'model': self.model,
             'scaler': self.scaler,
-            'mood_labels': self.mood_labels
+            'mood_labels': self.mood_labels,
+            'feature_names': self.feature_names
         }, filename)
         print(f"Model saved as '{filename}'")
     
@@ -292,6 +499,7 @@ class MoodClassifier:
         self.model = data['model']
         self.scaler = data['scaler']
         self.mood_labels = data['mood_labels']
+        self.feature_names = data.get('feature_names', ['tempo', 'energy', 'valence', 'loudness'])  # Default to 4 features
         print(f"Model loaded from '{filename}'")
 
 def main():
@@ -305,12 +513,8 @@ def main():
     # Initialize classifier
     classifier = MoodClassifier()
     
-    # Load dataset
+    # Load dataset (will automatically preprocess and save if needed)
     df = classifier.load_music_dataset()
-    
-    # Save dataset
-    df.to_csv('music_dataset.csv', index=False)
-    print("Dataset saved as 'music_dataset.csv'")
     
     # Train models
     results, X_test, y_test, y_pred = classifier.train_models(df)
