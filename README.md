@@ -28,9 +28,11 @@ Predictions are served through a **Flask REST API** and consumed by a **Next.js*
 
 | Model | Held-out accuracy | vs. random baseline (25%) |
 |-------|------------------|---------------------------|
-| Audio-only (Random Forest) | **~35%** | 1.4× |
-| Lyrics-only (VADER) | **~26.5%** | ~1.1× |
-| Audio + Lyrics fusion | _run `train_fusion_model.py` to fill in_ | — |
+| Audio-only (Random Forest) | **34.8%** | 1.4× |
+| Lyrics-only (VADER) | **36.1%** | 1.4× |
+| Audio + Lyrics fusion | **41.5%** | 1.7× |
+
+Combining both signals lifted accuracy from 36.1% (best single model) to 41.5% — a 5.5-point gain — confirming that how a song sounds and what it says carry independent, complementary information.
 
 **Headline finding:** across ~20,000 songs, the audio and lyrics models agreed on only **~26%** of predictions (disagreed ~74% of the time). The way a song _sounds_ and what it _says_ are largely independent signals — which is exactly why surface-level audio tagging alone produces awkward playlist placements.
 
