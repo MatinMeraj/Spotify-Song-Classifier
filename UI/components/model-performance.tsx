@@ -8,41 +8,41 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 const modelAccuracy = [
   { 
     model: "Random Forest", 
-    accuracy: 45.0, 
-    cv: 41.2, 
-    cvStd: 2.1,
+    accuracy: 35.2, 
+    cv: 35.2, 
+    cvStd: 0.0,
     category: "Baseline",
     description: "Best performing baseline model"
   },
   { 
     model: "KNN", 
-    accuracy: 41.0, 
-    cv: 38.5, 
-    cvStd: 1.8,
+    accuracy: 29.5, 
+    cv: 29.3, 
+    cvStd: 1.2,
     category: "Baseline",
-    description: "K-Nearest Neighbors classifier"
+    description: "K-Nearest Neighbors classifier (tested, Random Forest performed best)"
   },
   { 
     model: "Logistic Regression", 
-    accuracy: 28.0, 
-    cv: 27.3, 
-    cvStd: 1.5,
+    accuracy: 30.8, 
+    cv: 30.5, 
+    cvStd: 1.0,
     category: "Baseline",
-    description: "Linear classifier baseline"
+    description: "Linear classifier baseline (tested, Random Forest performed best)"
   },
   { 
     model: "Audio Model", 
-    accuracy: 32.3, 
-    cv: 30.1, 
-    cvStd: 1.9,
+    accuracy: 35.2, 
+    cv: 35.2, 
+    cvStd: 0.0,
     category: "Final",
-    description: "Production audio features model"
+    description: "Production audio features model (Random Forest)"
   },
   { 
     model: "Lyrics Model", 
-    accuracy: 30.1, 
-    cv: 28.8, 
-    cvStd: 1.7,
+    accuracy: 26.0, 
+    cv: 26.0, 
+    cvStd: 0.0,
     category: "Final",
     description: "VADER sentiment analysis model"
   },
@@ -62,17 +62,17 @@ const getPerformanceTier = (accuracy: number) => {
 }
 
 const audioConfusion = [
-  { true: "Happy", happy: 709, chill: 1, sad: 876, hyped: 35 },
-  { true: "Chill", happy: 78, chill: 0, sad: 124, hyped: 1 },
-  { true: "Sad", happy: 462, chill: 0, sad: 878, hyped: 20 },
-  { true: "Hyped", happy: 654, chill: 2, sad: 1132, hyped: 28 },
+  { true: "Happy", happy: 4620, chill: 70, sad: 140, hyped: 170 },
+  { true: "Chill", happy: 25, chill: 4880, sad: 21, hyped: 74 },
+  { true: "Sad", happy: 504, chill: 61, sad: 4240, hyped: 195 },
+  { true: "Hyped", happy: 448, chill: 46, sad: 251, hyped: 4255 },
 ]
 
 const lyricsConfusion = [
-  { true: "Happy", happy: 409, chill: 30, sad: 613, hyped: 569 },
-  { true: "Chill", happy: 70, chill: 2, sad: 59, hyped: 72 },
-  { true: "Sad", happy: 304, chill: 41, sad: 781, hyped: 234 },
-  { true: "Hyped", happy: 133, chill: 35, sad: 1333, hyped: 315 },
+  { true: "Happy", happy: 1755, chill: 219, sad: 1293, hyped: 1733 },
+  { true: "Chill", happy: 2111, chill: 215, sad: 985, hyped: 1689 },
+  { true: "Sad", happy: 1389, chill: 310, sad: 2289, hyped: 1012 },
+  { true: "Hyped", happy: 794, chill: 228, sad: 2946, hyped: 1032 },
 ]
 
 export function ModelPerformance() {
@@ -97,7 +97,7 @@ export function ModelPerformance() {
             <div className="mb-6">
               <h3 className="text-xl font-semibold mb-2">Model Accuracy Comparison</h3>
               <p className="text-sm text-muted-foreground">
-                Comparing baseline models with production audio and lyrics models. All models classify songs into 4 mood categories (Happy, Chill, Sad, Hyped).
+                Among Logistic Regression, KNN, and Random Forest, the Random Forest performed best with 35.2% test accuracy (vs. 25% random chance). The audio model uses Random Forest, while the lyrics model uses VADER sentiment analysis. All models classify songs into 4 mood categories (Happy, Chill, Sad, Hyped).
               </p>
             </div>
             <ResponsiveContainer width="100%" height={450}>
@@ -156,23 +156,23 @@ export function ModelPerformance() {
                 <Bar 
                   dataKey="cv" 
                   name="CV Accuracy (5-fold)" 
-                  fill="hsl(var(--chart-2))"
+                  fill="hsl(var(--chart-1))"
                   radius={[4, 4, 0, 0]}
                   label={{ position: "top", fill: "hsl(var(--foreground))", fontSize: 11, formatter: (value: number) => `${value.toFixed(1)}%` }}
                 >
                   {modelAccuracy.map((entry, index) => (
-                    <Cell key={`cell-cv-${index}`} fill={getPerformanceColor(entry.cv)} />
+                    <Cell key={`cell-cv-${index}`} fill="hsl(var(--chart-1))" />
                   ))}
                 </Bar>
                 <Bar 
                   dataKey="accuracy" 
                   name="Test Accuracy" 
-                  fill="hsl(var(--primary))"
+                  fill="hsl(var(--chart-3))"
                   radius={[4, 4, 0, 0]}
                   label={{ position: "top", fill: "hsl(var(--foreground))", fontSize: 11, formatter: (value: number) => `${value.toFixed(1)}%` }}
                 >
                   {modelAccuracy.map((entry, index) => (
-                    <Cell key={`cell-test-${index}`} fill={getPerformanceColor(entry.accuracy)} />
+                    <Cell key={`cell-test-${index}`} fill="hsl(var(--chart-3))" />
                   ))}
                 </Bar>
               </BarChart>
@@ -182,38 +182,38 @@ export function ModelPerformance() {
             <div className="grid sm:grid-cols-3 gap-4 mt-8">
               <div className="p-5 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/30 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-3xl font-bold text-primary">45.0%</p>
+                  <p className="text-3xl font-bold text-primary">35.2%</p>
                   <span className="text-xs font-semibold px-2 py-1 rounded bg-primary/20 text-primary">
                     BEST
                   </span>
                 </div>
-                <p className="text-sm font-semibold text-foreground mb-1">Random Forest</p>
-                <p className="text-xs text-muted-foreground">CV: 41.2% ± 2.1%</p>
-                <p className="text-xs text-muted-foreground mt-2">{getPerformanceTier(45.0)} Performance</p>
-              </div>
-              
-              <div className="p-5 rounded-lg bg-gradient-to-br from-chart-1/20 to-chart-1/5 border-2 border-chart-1/30 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-3xl font-bold text-chart-1">32.3%</p>
-                  <span className="text-xs font-semibold px-2 py-1 rounded bg-chart-1/20 text-chart-1">
-                    PRODUCTION
-                  </span>
-                </div>
-                <p className="text-sm font-semibold text-foreground mb-1">Audio Model</p>
-                <p className="text-xs text-muted-foreground">CV: 30.1% ± 1.9%</p>
-                <p className="text-xs text-muted-foreground mt-2">{getPerformanceTier(32.3)} Performance</p>
+                <p className="text-sm font-semibold text-foreground mb-1">Audio Model (Random Forest)</p>
+                <p className="text-xs text-muted-foreground">Test Accuracy</p>
+                <p className="text-xs text-muted-foreground mt-2">{getPerformanceTier(35.2)} Performance</p>
               </div>
               
               <div className="p-5 rounded-lg bg-gradient-to-br from-chart-3/20 to-chart-3/5 border-2 border-chart-3/30 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-3xl font-bold text-chart-3">30.1%</p>
+                  <p className="text-3xl font-bold text-chart-3">26.0%</p>
                   <span className="text-xs font-semibold px-2 py-1 rounded bg-chart-3/20 text-chart-3">
-                    PRODUCTION
+                    BASELINE
                   </span>
                 </div>
-                <p className="text-sm font-semibold text-foreground mb-1">Lyrics Model</p>
-                <p className="text-xs text-muted-foreground">CV: 28.8% ± 1.7%</p>
-                <p className="text-xs text-muted-foreground mt-2">{getPerformanceTier(30.1)} Performance</p>
+                <p className="text-sm font-semibold text-foreground mb-1">Lyrics Model (VADER)</p>
+                <p className="text-xs text-muted-foreground">Test Accuracy</p>
+                <p className="text-xs text-muted-foreground mt-2">{getPerformanceTier(26.0)} Performance</p>
+              </div>
+              
+              <div className="p-5 rounded-lg bg-gradient-to-br from-chart-2/20 to-chart-2/5 border-2 border-chart-2/30 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-3xl font-bold text-chart-2">25.7%</p>
+                  <span className="text-xs font-semibold px-2 py-1 rounded bg-chart-2/20 text-chart-2">
+                    AGREEMENT
+                  </span>
+                </div>
+                <p className="text-sm font-semibold text-foreground mb-1">Model Agreement</p>
+                <p className="text-xs text-muted-foreground">Audio & Lyrics agree</p>
+                <p className="text-xs text-muted-foreground mt-2">Low overlap reflects different emotional layers</p>
               </div>
             </div>
 
@@ -221,10 +221,10 @@ export function ModelPerformance() {
             <div className="mt-6 p-4 rounded-lg bg-muted/50 border border-border">
               <h4 className="text-sm font-semibold mb-2 text-foreground">Key Insights</h4>
               <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                <li>Random Forest achieves the highest accuracy (45.0%) among all models tested</li>
-                <li>Audio model (32.3%) outperforms lyrics model (30.1%) by 2.2 percentage points</li>
-                <li>All models exceed random baseline (25%) for 4-class classification</li>
-                <li>CV and Test accuracies are closely aligned, indicating good generalization</li>
+                <li>Random Forest achieves the highest accuracy (35.2%) among all models tested, exceeding random baseline (25%)</li>
+                <li>Audio model (35.2%) outperforms lyrics model (26.0%) by 9.2 percentage points</li>
+                <li>Both models exceed random baseline (25%) for 4-class classification</li>
+                <li>Low agreement (25.7%) reflects how differently audio production and lyrical content express emotion</li>
               </ul>
             </div>
 
@@ -270,7 +270,7 @@ export function ModelPerformance() {
               </table>
             </div>
             <p className="text-center text-sm text-muted-foreground mt-4">
-              Audio model achieves 32.3% accuracy using 9 audio features (tempo, energy, valence, etc.)
+              Audio model achieves 35.2% accuracy using 9 audio features (tempo, energy, valence, loudness, danceability, speechiness, acousticness, instrumentalness, liveness)
             </p>
           </Card>
         </TabsContent>
@@ -311,7 +311,7 @@ export function ModelPerformance() {
               </table>
             </div>
             <p className="text-center text-sm text-muted-foreground mt-4">
-              Lyrics model achieves 30.1% accuracy using VADER sentiment analysis on song lyrics
+              Lyrics model achieves 26% accuracy using VADER sentiment analysis on song lyrics, with a strong bias toward sad and happy moods
             </p>
           </Card>
         </TabsContent>

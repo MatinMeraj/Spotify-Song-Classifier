@@ -1,3 +1,4 @@
+
 import pandas as pd
 from pathlib import Path
 import os
@@ -12,6 +13,7 @@ except ImportError:
 
 
 class FreeLyricsClassifier:
+
     
     def __init__(self):
         if not VADER_AVAILABLE:
@@ -22,22 +24,29 @@ class FreeLyricsClassifier:
         self.api_calls = 0  # Keep for compatibility
     
     def classify_lyrics(self, lyrics, song_name=None, artist=None):
+        
         if not lyrics or pd.isna(lyrics) or str(lyrics).strip() == '':
-            return None, 0.0
+            #return None, 0.0
+            return 'chill', 0.1  
         
         # Get sentiment scores
         scores = self.analyzer.polarity_scores(str(lyrics))
         
+        # Compound score: -1 (very negative) to +1 (very positive)
         compound = scores['compound']
         
+        # Map to moods based on sentiment and intensity
         if compound > 0.5:
             # Very positive = happy
             mood = 'happy'
             confidence = compound
         elif compound > 0.1:
+            # Slightly positive = chill
             mood = 'chill'
+            # Boost confidence
             confidence = 0.5 + (compound - 0.1) * 0.625  
         elif compound < -0.5:
+            # Very negative = sad
             mood = 'sad'
             confidence = abs(compound)
         elif compound < -0.1:
@@ -47,13 +56,14 @@ class FreeLyricsClassifier:
                 confidence = abs(compound)
             else:
                 mood = 'chill'
+                # Boost confidence for near-neutral chill
                 confidence = 0.55 + (0.3 - abs(compound)) * 0.5  
         else:
             # Neutral = chill
             mood = 'chill'
-            confidence = 0.65 
+            confidence = 0.65  # Neutral songs are confidently "chill"
         
-        # Check for "hyped" keywords 
+        # Check for "hyped" keywords    
         lyrics_lower = str(lyrics).lower()
         hyped_keywords = ['party', 'dance', 'energy', 'fire', 'wild', 'crazy', 'lit', 
                          'pump', 'beat', 'bass', 'drop', 'turnt', 'hype']
@@ -62,11 +72,21 @@ class FreeLyricsClassifier:
                 mood = 'hyped'
                 confidence = min(0.9, abs(compound) + 0.2)
         
+        # Ensure confidence is in valid range [0, 1] and not NaN
+        confidence = max(0.0, min(1.0, float(confidence)))
+        if confidence != confidence:  # NaN check
+            confidence = 0.1  # Default low confidence
+        
+        # Ensure mood is valid
+        if mood not in self.mood_labels:
+            mood = 'chill'  # Default mood
+        
         self.api_calls += 1
         return mood, confidence
     
     def classify_dataset(self, df, lyrics_column='text', song_column='track_name', 
                         artist_column='artists', max_songs=None, delay=0):
+        
         result_df = df.copy()
         
         if lyrics_column not in df.columns:
@@ -80,8 +100,7 @@ class FreeLyricsClassifier:
         predictions = []
         confidences = []
         
-        print(f"Classifying {len(df_to_process)} songs using FREE VADER...")
-        print("(No API cost, runs locally!)")
+        print(f"Classifying {len(df_to_process)} songs using free VADER")
         print()
         
         for idx, row in df_to_process.iterrows():
@@ -110,20 +129,18 @@ class FreeLyricsClassifier:
         
         print(f"\nFinished! Classified {len(df_to_process)} songs.")
         print(f"Total classifications: {self.api_calls}")
-        print("💰 Cost: $0.00 (FREE!)")
+  
         
         return result_df
 
 
 def main():
-    print("=" * 60)
-    print("FREE Lyrics Classifier (VADER Sentiment)")
-    print("=" * 60)
-    print()
+
+    print(" Lyrics Classifier VADER")
+
     
     if not VADER_AVAILABLE:
-        print("❌ VADER not installed!")
-        print("Install it with: pip install vaderSentiment")
+        print("VADER not installed!")
         return
     
     # Initialize classifier
@@ -141,13 +158,10 @@ def main():
     print()
     for lyrics, expected in test_cases:
         mood, confidence = classifier.classify_lyrics(lyrics)
-        match = "✅" if mood == expected else "⚠️"
+        match = "good" if mood == expected else "bad"
         print(f"{match} Expected: {expected:6s} | Got: {mood:6s} | Confidence: {confidence:.2f}")
     
-    print()
-    print("✅ FREE classifier is working!")
-    print("💰 Cost: $0.00 (runs locally, no API needed)")
-    print()
+
 
 
 if __name__ == "__main__":
