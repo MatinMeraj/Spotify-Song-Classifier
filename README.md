@@ -1,128 +1,150 @@
-# Song Mood Classification System
+# 🎵 Song MoodMapper — Music Mood Classification
 
-A machine learning system for classifying songs into mood categories using audio features and machine learning algorithms.
+**Predicting a song's mood from how it _sounds_ vs. what it _says_.**
 
-## Project Overview
-This project implements a machine learning system that automatically classifies songs into different mood categories (happy, chill, sad, hyped) based on their audio features. The system uses various machine learning algorithms to achieve this classification task.
+> A song can sound like a party but read like a breakup. This project builds two
+> independent mood models — one on audio features, one on lyrics — and measures
+> how often they disagree.
 
-## Milestone 1 Goals
-- Basic end-to-end classifier working on labeled dataset
-- Four distinct mood categories mapped
-- Project repository set up in Git
-- Model training and evaluation complete
+<!-- TODO: replace with a real screenshot or GIF of the running app -->
+<!-- ![demo](docs/demo.gif) -->
+<!-- 🔗 **Live demo:** https://your-app.vercel.app -->
 
-## Mood Categories
-- **Happy**: Upbeat songs with high energy and positive valence
-- **Chill**: Relaxed songs with moderate energy and balanced mood
-- **Sad**: Slow tempo songs with low energy and negative valence  
-- **Hyped**: Fast tempo songs with high energy and very positive mood
+---
 
-## Quick Start
+## What it does
 
-### Installation
+Given a song, the system predicts one of four moods — **happy, chill, sad, hyped** — two different ways, and tells you whether the two agree:
+
+- **Audio model** — a Random Forest trained on 9 Spotify acoustic features (tempo, energy, valence, danceability, loudness, etc.)
+- **Lyrics model** — VADER sentiment analysis over the song's lyrics
+- **Agreement layer** — compares the two predictions and surfaces confidence + disagreement
+
+Predictions are served through a **Flask REST API** and consumed by a **Next.js** frontend.
+
+---
+
+## Key results
+
+| Model | Held-out accuracy | vs. random baseline (25%) |
+|-------|------------------|---------------------------|
+| Audio-only (Random Forest) | **~35%** | 1.4× |
+| Lyrics-only (VADER) | **~26.5%** | ~1.1× |
+| Audio + Lyrics fusion | _run `train_fusion_model.py` to fill in_ | — |
+
+**Headline finding:** across ~20,000 songs, the audio and lyrics models agreed on only **~26%** of predictions (disagreed ~74% of the time). The way a song _sounds_ and what it _says_ are largely independent signals — which is exactly why surface-level audio tagging alone produces awkward playlist placements.
+
+> ℹ️ **A note on honesty:** the "true" mood labels are derived from an emotion
+> column via a semantic mapping (joy→happy, anger→hyped, etc.), so these models
+> predict *that mapping* from each modality. The modest accuracy is a genuine
+> finding about how weakly audio features alone encode emotional mood — not a
+> bug. Earlier "confusion matrix vs. true labels" figures were computed on
+> non-held-out data and overstate accuracy; the numbers above come from a proper
+> train/test split.
+
+---
+
+## Architecture
+
+```
+Raw Spotify data (500K+ rows)
+        │  prep_data.py        → clean + map emotions to 4 moods
+        ▼
+  songs_mapped.csv
+        │  create_balanced_sample.py / audio_data.py → balance to 20K (5K/class)
+        ▼
+  songs_mapped_20k_balanced.csv
+        │
+        ├── train_audio_model.py   → RF / LogReg / KNN, 5-fold CV → best model.joblib
+        ├── lyrics_classifier_free.py → VADER sentiment → mood
+        ├── train_fusion_model.py  → honest audio vs lyrics vs fusion comparison
+        │
+        ▼
+  compare_audio_lyrics.py + enhanced_visualizations.py → 18 evaluation figures
+        │
+        ▼
+  api_server.py (Flask)  ←→  UI/ (Next.js frontend)
+```
+
+---
+
+## Tech stack
+
+**ML / data:** Python, pandas, NumPy, scikit-learn (Random Forest, pipelines, cross-validation), VADER sentiment
+**Visualization:** matplotlib, seaborn (confusion matrices, PCA/t-SNE, confidence distributions)
+**Serving:** Flask + flask-cors (REST API)
+**Frontend:** Next.js / React
+
+---
+
+## Run it locally
+
+### 1. Backend (model + API)
+
 ```bash
+# from project root
 pip install -r requirements.txt
+
+# (optional) regenerate data + models from scratch
+python src/prep_data.py
+python src/create_balanced_sample.py
+python src/train_audio_model.py
+
+# honest audio vs lyrics vs fusion comparison
+python src/train_fusion_model.py
+
+# start the API
+python src/api_server.py        # serves on http://localhost:8000
 ```
 
-### Run the Classifier
+### 2. Frontend
+
 ```bash
-python milestone1_mood_classifier.py
+cd UI
+npm install
+npm run dev                      # serves on http://localhost:3000
 ```
 
-## Features
+### 3. Try a prediction
 
-### Data Processing
-- Dataset with 900 songs across multiple genres
-- 9 audio features including tempo, energy, valence, and loudness
-- Feature scaling and train/test split for model evaluation
-
-### Machine Learning Models
-- Random Forest: Ensemble method with feature importance analysis
-- Logistic Regression: Linear classification with regularization
-- K-Nearest Neighbors: Distance-based classification algorithm
-
-### Evaluation
-- 5-fold cross-validation for robust model evaluation
-- Performance metrics including accuracy, precision, recall, and F1-score
-- Comprehensive visualizations including confusion matrix and feature analysis
-
-## Results
-
-### Model Performance
-- Best performing model: Random Forest with 81% accuracy
-- 5-fold cross-validation with confidence intervals
-- Test accuracy evaluated on 20% holdout set
-
-### Generated Files
-- `music_dataset.csv`: Complete dataset with features and labels
-- `milestone1_model.pkl`: Trained model for predictions
-- `milestone1_analysis.png`: Comprehensive analysis visualizations
-
-## Usage Example
-
-```python
-from milestone1_mood_classifier import MoodClassifier
-
-# Initialize classifier
-classifier = MoodClassifier()
-
-# Load trained model
-classifier.load_model('milestone1_model.pkl')
-
-# Predict mood for new song
-prediction, confidence = classifier.predict_new_song(
-    tempo=120,      # BPM
-    energy=0.8,     # 0-1 scale
-    valence=0.7,    # 0-1 scale
-    loudness=-5     # dB
-)
-
-print(f"Predicted mood: {prediction}")
-print(f"Confidence: {confidence:.3f}")
+```bash
+curl -X POST http://localhost:8000/api/predict \
+  -H "Content-Type: application/json" \
+  -d '{"song": "Mr. Brightside", "artist": "The Killers"}'
 ```
 
-## Project Structure
+---
+
+## Project structure
+
 ```
-song-mood-classifier/
-├── milestone1_mood_classifier.py  # Main implementation
-├── requirements.txt               # Dependencies
-├── README.md                     # This file
-├── music_dataset.csv             # Generated dataset
-├── milestone1_model.pkl          # Trained model
-└── milestone1_analysis.png      # Analysis visualizations
+src/
+  prep_data.py                  # raw → mood-mapped dataset
+  audio_data.py                 # feature normalization + balanced split
+  create_balanced_sample.py     # even 5K-per-class sampling
+  train_audio_model.py          # RF/LogReg/KNN with 5-fold CV
+  lyrics_classifier_free.py     # VADER lyrics → mood
+  train_fusion_model.py         # held-out audio vs lyrics vs fusion
+  compare_audio_lyrics.py       # cross-modal agreement analysis
+  enhanced_visualizations.py    # 18 evaluation figures
+  api_server.py                 # Flask REST API
+UI/                             # Next.js frontend
+data/processed/                 # mapped + balanced datasets
+models/                         # trained model (.joblib)
+figures/                        # generated plots
 ```
 
-## Next Steps (Future Milestones)
-- Milestone 2: Spotify API integration for real-time prediction
-- Web Interface: User-friendly song mood prediction
-- Playlist Generation: Create mood-based playlists
-- Advanced Models: Deep learning and ensemble methods
+---
 
-## Team Collaboration
-- Branch Strategy: Feature branches for each team member
-- Code Review: Pull requests for integration
-- Documentation: Comprehensive README and code comments
+## Limitations & honest notes
 
-## Technical Details
+- Labels are a semantic mapping from an emotion column, not human-verified mood tags — accuracy ceilings reflect that.
+- Audio features alone are weak predictors of lyrical mood (the central finding, not a defect).
+- VADER is a lexicon-based sentiment tool; it has no music-specific tuning.
+- Reported accuracy is from a single held-out split; figures labeled "vs. true labels" in earlier versions were not held out and should not be read as accuracy.
 
-### Dependencies
-- pandas >= 1.5.0
-- numpy >= 1.21.0
-- matplotlib >= 3.5.0
-- seaborn >= 0.11.0
-- scikit-learn >= 1.1.0
+## Future work
 
-### Model Architecture
-- **Feature Engineering**: 9 audio features
-- **Data Splitting**: 80/20 train/test split with stratification
-- **Cross-validation**: 5-fold CV for model selection
-- **Scaling**: StandardScaler for feature normalization
-
-## Business Applications
-- Music Recommendation: Personalized playlist generation
-- Content Curation: Automated music categorization
-- Mood-based Search: Find songs matching desired emotional state
-- Music Analytics: Understanding listener preferences
-
-## License
-This project is part of CMPT 310 - Introduction to Artificial Intelligence course work.
+- Train a single multimodal model on audio + lyrics features (see `train_fusion_model.py`) and report the lift.
+- Deploy a live demo (Vercel frontend + Render/Railway API).
+- Replace VADER with a fine-tuned text classifier for lyrics.
