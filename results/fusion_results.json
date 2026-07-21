@@ -1,0 +1,9 @@
+{
+  "n_rows": 20000,
+  "n_test": 4000,
+  "random_baseline": 0.25,
+  "audio_only_acc": 0.348,
+  "lyrics_only_acc": 0.3608,
+  "fusion_acc": 0.4155,
+  "fusion_gain_over_best_single": 0.0547
+}
