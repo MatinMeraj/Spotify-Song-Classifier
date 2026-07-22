@@ -66,3 +66,8 @@ yarn-error.log*
 out/
 build/
 dist/.venv/
+
+# --- allow small files needed for the Streamlit app ---
+!models/mood_model_small.joblib
+!results/fusion_results.json
+!figures/*.png

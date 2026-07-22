@@ -1,152 +1,54 @@
-# 🎵 Song MoodMapper — Music Mood Classification
+# Music Mood Classifier
+*(originally **Song MoodMapper**, CMPT 310 group project)*
 
-**Predicting a song's mood from how it _sounds_ vs. what it _says_.**
+Predicting a song's mood from how it sounds versus what it says.
 
-> A song can sound like a party but read like a breakup. This project builds two
-> independent mood models — one on audio features, one on lyrics — and measures
-> how often they disagree.
+**Live app:** https://matinmeraj-musicmood.streamlit.app
 
-<!-- TODO: replace with a real screenshot or GIF of the running app -->
-<!-- ![demo](docs/demo.gif) -->
-<!-- 🔗 **Live demo:** https://your-app.vercel.app -->
-
----
-
-## What it does
-
-Given a song, the system predicts one of four moods — **happy, chill, sad, hyped** — two different ways, and tells you whether the two agree:
-
-- **Audio model** — a Random Forest trained on 9 Spotify acoustic features (tempo, energy, valence, danceability, loudness, etc.)
-- **Lyrics model** — VADER sentiment analysis over the song's lyrics
-- **Agreement layer** — compares the two predictions and surfaces confidence + disagreement
-
-Predictions are served through a **Flask REST API** and consumed by a **Next.js** frontend.
-
----
+A song can sound like a party but read like a breakup. This project builds two mood models. One listens only to the audio. The other reads only the lyrics. Then it measures what happens when you combine them.
 
 ## Key results
 
 | Model | Held-out accuracy | vs. random baseline (25%) |
 |-------|------------------|---------------------------|
-| Audio-only (Random Forest) | **34.8%** | 1.4× |
-| Lyrics-only (VADER) | **36.1%** | 1.4× |
-| Audio + Lyrics fusion | **41.5%** | 1.7× |
+| Audio only (Random Forest) | 34.8% | 1.4x |
+| Lyrics only (VADER) | 36.1% | 1.4x |
+| Audio + Lyrics (fusion) | 41.5% | 1.7x |
 
-Combining both signals lifted accuracy from 36.1% (best single model) to 41.5% — a 5.5-point gain — confirming that how a song sounds and what it says carry independent, complementary information.
+Each signal is weak on its own. Combined, they reach 41.5% on a held-out set of 4,000 songs, a 5.5-point gain over the best single model. Across roughly 20,000 songs, the audio mood and the lyrics mood disagree about 74% of the time. Sound and words carry different information, which is exactly why using both wins.
 
-**Headline finding:** across ~20,000 songs, the audio and lyrics models agreed on only **~26%** of predictions (disagreed ~74% of the time). The way a song _sounds_ and what it _says_ are largely independent signals — which is exactly why surface-level audio tagging alone produces awkward playlist placements.
+## What it does
 
-> ℹ️ **A note on honesty:** the "true" mood labels are derived from an emotion
-> column via a semantic mapping (joy→happy, anger→hyped, etc.), so these models
-> predict *that mapping* from each modality. The modest accuracy is a genuine
-> finding about how weakly audio features alone encode emotional mood — not a
-> bug. Earlier "confusion matrix vs. true labels" figures were computed on
-> non-held-out data and overstate accuracy; the numbers above come from a proper
-> train/test split.
-
----
-
-## Architecture
-
-```
-Raw Spotify data (500K+ rows)
-        │  prep_data.py        → clean + map emotions to 4 moods
-        ▼
-  songs_mapped.csv
-        │  create_balanced_sample.py / audio_data.py → balance to 20K (5K/class)
-        ▼
-  songs_mapped_20k_balanced.csv
-        │
-        ├── train_audio_model.py   → RF / LogReg / KNN, 5-fold CV → best model.joblib
-        ├── lyrics_classifier_free.py → VADER sentiment → mood
-        ├── train_fusion_model.py  → honest audio vs lyrics vs fusion comparison
-        │
-        ▼
-  compare_audio_lyrics.py + enhanced_visualizations.py → 18 evaluation figures
-        │
-        ▼
-  api_server.py (Flask)  ←→  UI/ (Next.js frontend)
-```
-
----
-
-## Tech stack
-
-**ML / data:** Python, pandas, NumPy, scikit-learn (Random Forest, pipelines, cross-validation), VADER sentiment
-**Visualization:** matplotlib, seaborn (confusion matrices, PCA/t-SNE, confidence distributions)
-**Serving:** Flask + flask-cors (REST API)
-**Frontend:** Next.js / React
-
----
+- **Audio model.** A Random Forest trained on 8 Spotify audio features like tempo, energy, and valence.
+- **Lyrics model.** VADER sentiment scores on the song text.
+- **Fusion model.** One Random Forest trained on both feature sets together.
+- **Live dashboard.** A Streamlit app that shows the results and lets you enter a song's features and lyrics to get a live prediction.
 
 ## Run it locally
 
-### 1. Backend (model + API)
-
 ```bash
-# from project root
 pip install -r requirements.txt
-
-# (optional) regenerate data + models from scratch
-python src/prep_data.py
-python src/create_balanced_sample.py
-python src/train_audio_model.py
-
-# honest audio vs lyrics vs fusion comparison
-python src/train_fusion_model.py
-
-# start the API
-python src/api_server.py        # serves on http://localhost:8000
+streamlit run app.py
 ```
 
-### 2. Frontend
+## Honest notes
 
-```bash
-cd UI
-npm install
-npm run dev                      # serves on http://localhost:3000
-```
+- The dataset ships with lyrics-based emotion labels (joy, sadness, anger, fear, love, surprise), which were mapped to 4 moods and balanced to 20,000 songs.
+- Accuracy is modest because mood is a fuzzy 4-class target. The interesting result is the lift from fusion, not the raw number.
+- The live demo runs a lightweight version of the model so it loads fast. The reported accuracy comes from the full model.
 
-### 3. Try a prediction
+## Credits
 
-```bash
-curl -X POST http://localhost:8000/api/predict \
-  -H "Content-Type: application/json" \
-  -d '{"song": "Mr. Brightside", "artist": "The Killers"}'
-```
+This started as a group project for CMPT 310 (Introduction to Artificial Intelligence) at Simon Fraser University, Fall 2025.
 
----
+**Original team (Song MoodMapper):**
+- Nadine Gunawan
+- Jim Saraza
+- Matin Meraj Mohammadi
+- Thanh Vinh Nguyen
 
-## Project structure
+**Later additions by Matin Meraj Mohammadi:** the fusion model, the honest held-out evaluation, the Streamlit dashboard, and the live deployment.
 
-```
-src/
-  prep_data.py                  # raw → mood-mapped dataset
-  audio_data.py                 # feature normalization + balanced split
-  create_balanced_sample.py     # even 5K-per-class sampling
-  train_audio_model.py          # RF/LogReg/KNN with 5-fold CV
-  lyrics_classifier_free.py     # VADER lyrics → mood
-  train_fusion_model.py         # held-out audio vs lyrics vs fusion
-  compare_audio_lyrics.py       # cross-modal agreement analysis
-  enhanced_visualizations.py    # 18 evaluation figures
-  api_server.py                 # Flask REST API
-UI/                             # Next.js frontend
-data/processed/                 # mapped + balanced datasets
-models/                         # trained model (.joblib)
-figures/                        # generated plots
-```
+## Stack
 
----
-
-## Limitations & honest notes
-
-- Labels are a semantic mapping from an emotion column, not human-verified mood tags — accuracy ceilings reflect that.
-- Audio features alone are weak predictors of lyrical mood (the central finding, not a defect).
-- VADER is a lexicon-based sentiment tool; it has no music-specific tuning.
-- Reported accuracy is from a single held-out split; figures labeled "vs. true labels" in earlier versions were not held out and should not be read as accuracy.
-
-## Future work
-
-- Train a single multimodal model on audio + lyrics features (see `train_fusion_model.py`) and report the lift.
-- Deploy a live demo (Vercel frontend + Render/Railway API).
-- Replace VADER with a fine-tuned text classifier for lyrics.
+Python, pandas, scikit-learn, VADER, Streamlit.
